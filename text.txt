@@ -1,0 +1,1197 @@
+<?php include '../includes/sidebar.php'; ?>
+
+header.php:
+<?php
+// Bắt đầu phiên làm việc nếu chưa bắt đầu
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Import file cấu hình
+require_once __DIR__ . '/../config/config.php';
+
+// Kiểm tra xem người dùng đã đăng nhập chưa (sẽ triển khai đầy đủ trong file auth/check_login.php sau)
+$logged_in = isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+$user_role = $logged_in ? ($_SESSION['role'] ?? '') : '';
+$user_name = $logged_in ? ($_SESSION['fullname'] ?? '') : '';
+
+// Lấy đường dẫn hiện tại để xác định menu nào đang active
+$current_page = basename($_SERVER['PHP_SELF']);
+?>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Quản lý Khách sạn</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?php echo $logged_in && $user_role == 'quản lý' ? '/quanlykhachsan/assets/css/style.css' : '/quan_ly_khach_san/assets/css/style.css'; ?>">
+    <style>
+        /* Responsive adjustments for header */
+        @media (max-width: 991.98px) {
+            .navbar-collapse {
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+            
+            .dropdown-menu {
+                border: none;
+                background-color: transparent;
+                padding-left: 1rem;
+            }
+            
+            .dropdown-item {
+                color: rgba(255,255,255,.75);
+                padding: 0.5rem 0;
+            }
+            
+            .dropdown-item:hover {
+                background-color: transparent;
+                color: #fff;
+            }
+            
+            .dropdown-divider {
+                border-color: rgba(255,255,255,.25);
+            }
+        }
+        
+        /* Ensure long menu items don't break layout */
+        .nav-link, .dropdown-item {
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        
+        /* Improve visibility of active items */
+        .nav-link.active {
+            font-weight: bold;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+        
+        /* Smooth transitions for dropdown menus */
+        .dropdown-menu {
+            transition: all 0.3s;
+        }
+        
+        /* Fix navbar at top for small screens */
+        @media (max-width: 576px) {
+            body {
+                padding-top: 56px;
+            }
+            header.bg-dark {
+                position: fixed;
+                top: 0;
+                width: 100%;
+                z-index: 1030;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="bg-dark text-white">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand" href="/quanlykhachsan/index.php">
+                    <i class="fas fa-hotel me-2"></i>Quản lý Khách sạn
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <?php if ($logged_in): ?>
+                        <!-- Menu cho người dùng đã đăng nhập -->
+                        <ul class="navbar-nav me-auto">
+                            <li class="nav-item">
+                                <a class="nav-link <?php echo $current_page == 'index.php' ? 'active' : ''; ?>" href="/quanlykhachsan/index.php">
+                                    <i class="fas fa-home me-1"></i> Trang chủ
+                                </a>
+                            </li>
+                            
+                            <!-- Menu dành cho quản lý -->
+                            <?php if ($user_role == 'quản lý'): ?>
+                            <li class="nav-item">
+                                <a class="nav-link <?php echo strpos($current_page, 'admin') !== false ? 'active' : ''; ?>" href="/quanlykhachsan/admin/index.php">
+                                    <i class="fas fa-cogs me-1"></i> Quản trị
+                                </a>
+                            </li>
+                            <?php endif; ?>
+                            
+                            <!-- Menu chung cho tất cả nhân viên -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownPhong" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-door-open me-1"></i> Phòng
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/quanlykhachsan/admin/phong/index.php">Danh sách phòng</a></li>
+                                    <li><a class="dropdown-item" href="/quanlykhachsan/admin/phong/tim_phong_trong.php">Tìm phòng trống</a></li>
+                                </ul>
+                            </li>
+                            
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownDatPhong" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-calendar-check me-1"></i> Đặt phòng
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/quanlykhachsan/admin/dat_phong/index.php">Danh sách đặt phòng</a></li>
+                                    <li><a class="dropdown-item" href="/quanlykhachsan/admin/dat_phong/them.php">Đặt phòng mới</a></li>
+                                    <li><a class="dropdown-item" href="/quanlykhachsan/admin/dat_phong/nhan_phong.php">Nhận phòng</a></li>
+                                    <li><a class="dropdown-item" href="/quanlykhachsan/admin/dat_phong/tra_phong.php">Trả phòng</a></li>
+                                </ul>
+                            </li>
+                            
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownDichVu" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-concierge-bell me-1"></i> Dịch vụ
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/quanlykhachsan/admin/dich_vu/index.php">Danh sách dịch vụ</a></li>
+                                    <li><a class="dropdown-item" href="/quanlykhachsan/admin/dich_vu/su_dung_dich_vu.php">Đặt dịch vụ</a></li>
+                                </ul>
+                            </li>
+                            
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownKhachHang" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-users me-1"></i> Khách hàng
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/quanlykhachsan/admin/khach_hang/index.php">Danh sách khách hàng</a></li>
+                                    <li><a class="dropdown-item" href="/quanlykhachsan/admin/khach_hang/them.php">Thêm khách hàng</a></li>
+                                    <li><a class="dropdown-item" href="/quanlykhachsan/admin/khach_hang/tim_kiem.php">Tìm kiếm khách hàng</a></li>
+                                </ul>
+                            </li>
+                            
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownHoaDon" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-file-invoice-dollar me-1"></i> Hóa đơn
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/quanlykhachsan/admin/hoa_don/index.php">Danh sách hóa đơn</a></li>
+                                    <li><a class="dropdown-item" href="/quanlykhachsan/admin/hoa_don/thanh_toan.php">Thanh toán</a></li>
+                                </ul>
+                            </li>
+                            
+                            <?php if ($user_role == 'quản lý'): ?>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownBaoCao" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-chart-bar me-1"></i> Báo cáo
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/quanlykhachsan/admin/bao_cao/doanh_thu.php">Báo cáo doanh thu</a></li>
+                                    <li><a class="dropdown-item" href="/quanlykhachsan/admin/bao_cao/tinh_trang_phong.php">Tình trạng phòng</a></li>
+                                </ul>
+                            </li>
+                            <?php endif; ?>
+                        </ul>
+                        
+                        <!-- Thông tin người dùng và đăng xuất -->
+                        <ul class="navbar-nav">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user-circle me-1"></i> <?php echo htmlspecialchars($user_name); ?>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="/quanlykhachsan/admin/tai_khoan/thong_tin.php">Thông tin tài khoản</a></li>
+                                    <li><a class="dropdown-item" href="/quanlykhachsan/admin/tai_khoan/doi_mat_khau.php">Đổi mật khẩu</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="/quanlykhachsan/auth/logout.php">Đăng xuất</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    <?php else: ?>
+                        <!-- Menu cho người dùng chưa đăng nhập -->
+                        <ul class="navbar-nav me-auto">
+                            <li class="nav-item">
+                                <a class="nav-link <?php echo $current_page == 'index.php' ? 'active' : ''; ?>" href="/quanlykhachsan/index.php">
+                                    <i class="fas fa-home me-1"></i> Trang chủ
+                                </a>
+                            </li>
+                        </ul>
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link" href="/quanlykhachsan/auth/login.php">
+                                    <i class="fas fa-sign-in-alt me-1"></i> Đăng nhập
+                                </a>
+                            </li>
+                        </ul>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </nav>
+    </header>
+    
+    <div class="container mt-4">
+        <?php
+        // Hiển thị thông báo nếu có
+        if (isset($_SESSION['message'])) {
+            echo '<div class="alert alert-' . $_SESSION['message_type'] . ' alert-dismissible fade show" role="alert">';
+            echo $_SESSION['message'];
+            echo '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+            echo '</div>';
+            
+            // Xóa thông báo sau khi hiển thị
+            unset($_SESSION['message']);
+            unset($_SESSION['message_type']);
+        }
+        ?>
+
+doanh_thu.php:
+<?php
+// Bắt đầu phiên làm việc
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Kiểm tra đăng nhập
+if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+    // Chuyển hướng về trang đăng nhập
+    header("Location: /quanlykhachsan/auth/login.php");
+    exit();
+}
+
+// Kiểm tra quyền quản lý
+if ($_SESSION['role'] !== 'quản lý') {
+    $_SESSION['message'] = "Bạn không có quyền truy cập trang này!";
+    $_SESSION['message_type'] = "danger";
+    header("Location: /quanlykhachsan/index.php");
+    exit();
+}
+
+// Import file cấu hình và header
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../includes/header.php';
+
+// Xử lý lọc dữ liệu
+$ngay_bat_dau = date('Y-m-01'); // Mặc định là ngày đầu tháng hiện tại
+$ngay_ket_thuc = date('Y-m-t'); // Mặc định là ngày cuối tháng hiện tại
+$loai_bao_cao = "ngay"; // Mặc định báo cáo theo ngày
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $ngay_bat_dau = isset($_POST['ngay_bat_dau']) ? $_POST['ngay_bat_dau'] : $ngay_bat_dau;
+    $ngay_ket_thuc = isset($_POST['ngay_ket_thuc']) ? $_POST['ngay_ket_thuc'] : $ngay_ket_thuc;
+    $loai_bao_cao = isset($_POST['loai_bao_cao']) ? $_POST['loai_bao_cao'] : $loai_bao_cao;
+}
+
+// Xây dựng câu truy vấn dựa trên loại báo cáo
+$group_by = "";
+$date_format = "";
+$select_date = "";
+
+switch ($loai_bao_cao) {
+    case 'ngay':
+        $group_by = "GROUP BY ngay";
+        $date_format = "%Y-%m-%d";
+        $select_date = "DATE(h.ngay_thanh_toan) AS ngay";
+        break;
+    case 'thang':
+        $group_by = "GROUP BY nam, thang";
+        $date_format = "%Y-%m";
+        $select_date = "YEAR(h.ngay_thanh_toan) AS nam, MONTH(h.ngay_thanh_toan) AS thang";
+        break;
+    case 'nam':
+        $group_by = "GROUP BY nam";
+        $date_format = "%Y";
+        $select_date = "YEAR(h.ngay_thanh_toan) AS nam";
+        break;
+}
+
+// Truy vấn báo cáo doanh thu
+$sql = "
+    SELECT 
+        $select_date,
+        DATE_FORMAT(h.ngay_thanh_toan, '$date_format') AS thoi_gian,
+        COUNT(h.id) AS so_luong_hoa_don,
+        SUM(h.tong_tien_phong) AS tong_tien_phong,
+        SUM(h.tong_tien_dich_vu) AS tong_tien_dich_vu,
+        SUM(h.tong_thanh_toan) AS tong_doanh_thu
+    FROM 
+        hoa_don h
+    WHERE 
+        h.ngay_thanh_toan BETWEEN :ngay_bat_dau AND :ngay_ket_thuc
+        AND h.trang_thai = 'đã thanh toán'
+    $group_by
+    ORDER BY 
+        h.ngay_thanh_toan
+";
+
+$params = [
+    ':ngay_bat_dau' => $ngay_bat_dau,
+    ':ngay_ket_thuc' => $ngay_ket_thuc
+];
+
+$bao_cao_doanh_thu = fetchAllRows($sql, $params);
+
+// Tính tổng doanh thu
+$tong_so_hoa_don = 0;
+$tong_tien_phong = 0;
+$tong_tien_dich_vu = 0;
+$tong_doanh_thu = 0;
+
+if ($bao_cao_doanh_thu) {
+    foreach ($bao_cao_doanh_thu as $item) {
+        $tong_so_hoa_don += $item['so_luong_hoa_don'];
+        $tong_tien_phong += $item['tong_tien_phong'];
+        $tong_tien_dich_vu += $item['tong_tien_dich_vu'];
+        $tong_doanh_thu += $item['tong_doanh_thu'];
+    }
+}
+
+// Thống kê doanh thu theo loại phòng
+$sql_theo_loai_phong = "
+    SELECT 
+        p.loai_phong,
+        COUNT(h.id) AS so_luong_hoa_don,
+        SUM(h.tong_tien_phong) AS tong_tien_phong,
+        SUM(h.tong_tien_dich_vu) AS tong_tien_dich_vu,
+        SUM(h.tong_thanh_toan) AS tong_doanh_thu
+    FROM 
+        hoa_don h
+    JOIN 
+        dat_phong dp ON h.id_dat_phong = dp.id
+    JOIN 
+        phong p ON dp.id_phong = p.id
+    WHERE 
+        h.ngay_thanh_toan BETWEEN :ngay_bat_dau AND :ngay_ket_thuc
+        AND h.trang_thai = 'đã thanh toán'
+    GROUP BY 
+        p.loai_phong
+    ORDER BY 
+        tong_doanh_thu DESC
+";
+
+$thong_ke_theo_loai_phong = fetchAllRows($sql_theo_loai_phong, $params);
+
+// Thống kê doanh thu theo dịch vụ
+$sql_theo_dich_vu = "
+    SELECT 
+        dv.ten_dich_vu,
+        COUNT(sddv.id) AS so_luong_su_dung,
+        SUM(sddv.thanh_tien) AS tong_tien_dich_vu
+    FROM 
+        su_dung_dich_vu sddv
+    JOIN 
+        dich_vu dv ON sddv.id_dich_vu = dv.id
+    JOIN 
+        dat_phong dp ON sddv.id_dat_phong = dp.id
+    JOIN 
+        hoa_don h ON h.id_dat_phong = dp.id
+    WHERE 
+        h.ngay_thanh_toan BETWEEN :ngay_bat_dau AND :ngay_ket_thuc
+        AND h.trang_thai = 'đã thanh toán'
+    GROUP BY 
+        dv.id
+    ORDER BY 
+        tong_tien_dich_vu DESC
+";
+
+$thong_ke_theo_dich_vu = fetchAllRows($sql_theo_dich_vu, $params);
+?>
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Báo cáo doanh thu</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/quanlykhachsan/admin/index.php">Trang quản trị</a></li>
+        <li class="breadcrumb-item active">Báo cáo doanh thu</li>
+    </ol>
+
+    <!-- Form lọc dữ liệu -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-filter me-1"></i>
+            Lọc dữ liệu
+        </div>
+        <div class="card-body">
+            <form method="post" action="" id="form-filter" class="row g-3">
+                <div class="col-md-3">
+                    <label for="loai_bao_cao" class="form-label">Loại báo cáo</label>
+                    <select class="form-select" name="loai_bao_cao" id="loai_bao_cao">
+                        <option value="ngay" <?php echo $loai_bao_cao == 'ngay' ? 'selected' : ''; ?>>Theo ngày</option>
+                        <option value="thang" <?php echo $loai_bao_cao == 'thang' ? 'selected' : ''; ?>>Theo tháng</option>
+                        <option value="nam" <?php echo $loai_bao_cao == 'nam' ? 'selected' : ''; ?>>Theo năm</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="ngay_bat_dau" class="form-label">Từ ngày</label>
+                    <input type="date" class="form-control" id="ngay_bat_dau" name="ngay_bat_dau" value="<?php echo $ngay_bat_dau; ?>">
+                </div>
+                <div class="col-md-3">
+                    <label for="ngay_ket_thuc" class="form-label">Đến ngày</label>
+                    <input type="date" class="form-control" id="ngay_ket_thuc" name="ngay_ket_thuc" value="<?php echo $ngay_ket_thuc; ?>">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-search me-1"></i> Lọc dữ liệu
+                    </button>
+                    <button type="button" id="btn-export" class="btn btn-success">
+                        <i class="fas fa-file-export me-1"></i> Xuất Excel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tổng quan doanh thu -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <h4><?php echo number_format($tong_so_hoa_don); ?></h4>
+                    <div>Tổng số hóa đơn</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <h4><?php echo number_format($tong_tien_phong); ?> VNĐ</h4>
+                    <div>Tổng tiền phòng</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <h4><?php echo number_format($tong_tien_dich_vu); ?> VNĐ</h4>
+                    <div>Tổng tiền dịch vụ</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-danger text-white mb-4">
+                <div class="card-body">
+                    <h4><?php echo number_format($tong_doanh_thu); ?> VNĐ</h4>
+                    <div>Tổng doanh thu</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Báo cáo doanh thu theo thời gian -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-chart-line me-1"></i>
+            Doanh thu theo thời gian
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped" id="dataTable">
+                    <thead> 
+                        <tr>
+                            <th>Thời gian</th>
+                            <th>Số lượng hóa đơn</th>
+                            <th>Tiền phòng</th>
+                            <th>Tiền dịch vụ</th>
+                            <th>Tổng doanh thu</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (!empty($bao_cao_doanh_thu)): ?>
+                            <?php foreach ($bao_cao_doanh_thu as $item): ?>
+                                <tr>
+                                    <td>
+                                        <?php 
+                                        if ($loai_bao_cao == 'thang') {
+                                            echo 'Tháng ' . $item['thang'] . '/' . $item['nam'];
+                                        } elseif ($loai_bao_cao == 'nam') {
+                                            echo 'Năm ' . $item['nam'];
+                                        } else {
+                                            echo date('d/m/Y', strtotime($item['thoi_gian']));
+                                        }
+                                        ?>
+                                    </td>
+                                    <td><?php echo number_format($item['so_luong_hoa_don']); ?></td>
+                                    <td><?php echo number_format($item['tong_tien_phong']); ?> VNĐ</td>
+                                    <td><?php echo number_format($item['tong_tien_dich_vu']); ?> VNĐ</td>
+                                    <td><?php echo number_format($item['tong_doanh_thu']); ?> VNĐ</td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="5" class="text-center">Không có dữ liệu</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                    <tfoot>
+                        <tr class="fw-bold">
+                            <td>Tổng cộng</td>
+                            <td><?php echo number_format($tong_so_hoa_don); ?></td>
+                            <td><?php echo number_format($tong_tien_phong); ?> VNĐ</td>
+                            <td><?php echo number_format($tong_tien_dich_vu); ?> VNĐ</td>
+                            <td><?php echo number_format($tong_doanh_thu); ?> VNĐ</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Biểu đồ doanh thu -->
+    <div class="row">
+        <!-- Biểu đồ doanh thu theo thời gian -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-bar me-1"></i>
+                    Biểu đồ doanh thu
+                </div>
+                <div class="card-body">
+                    <canvas id="myBarChart" width="100%" height="50"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Biểu đồ tỷ lệ doanh thu theo loại phòng -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-pie me-1"></i>
+                    Tỷ lệ doanh thu theo loại phòng
+                </div>
+                <div class="card-body">
+                    <canvas id="myPieChart" width="100%" height="50"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thống kê theo loại phòng -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-bed me-1"></i>
+            Thống kê doanh thu theo loại phòng
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Loại phòng</th>
+                            <th>Số lượng hóa đơn</th>
+                            <th>Tiền phòng</th>
+                            <th>Tiền dịch vụ</th>
+                            <th>Tổng doanh thu</th>
+                            <th>Tỷ lệ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (!empty($thong_ke_theo_loai_phong)): ?>
+                            <?php foreach ($thong_ke_theo_loai_phong as $item): ?>
+                                <tr>
+                                    <td>
+                                        <?php 
+                                        switch ($item['loai_phong']) {
+                                            case 'đơn':
+                                                echo 'Phòng đơn';
+                                                break;
+                                            case 'đôi':
+                                                echo 'Phòng đôi';
+                                                break;
+                                            case 'vip':
+                                                echo 'Phòng VIP';
+                                                break;
+                                            default:
+                                                echo $item['loai_phong'];
+                                        }
+                                        ?>
+                                    </td>
+                                    <td><?php echo number_format($item['so_luong_hoa_don']); ?></td>
+                                    <td><?php echo number_format($item['tong_tien_phong']); ?> VNĐ</td>
+                                    <td><?php echo number_format($item['tong_tien_dich_vu']); ?> VNĐ</td>
+                                    <td><?php echo number_format($item['tong_doanh_thu']); ?> VNĐ</td>
+                                    <td>
+                                        <?php echo $tong_doanh_thu > 0 ? number_format(($item['tong_doanh_thu'] / $tong_doanh_thu) * 100, 2) : 0; ?>%
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="6" class="text-center">Không có dữ liệu</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thống kê doanh thu theo dịch vụ -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-concierge-bell me-1"></i>
+            Thống kê doanh thu theo dịch vụ
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Tên dịch vụ</th>
+                            <th>Số lần sử dụng</th>
+                            <th>Tổng doanh thu</th>
+                            <th>Tỷ lệ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (!empty($thong_ke_theo_dich_vu)): ?>
+                            <?php foreach ($thong_ke_theo_dich_vu as $item): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($item['ten_dich_vu']); ?></td>
+                                    <td><?php echo number_format($item['so_luong_su_dung']); ?></td>
+                                    <td><?php echo number_format($item['tong_tien_dich_vu']); ?> VNĐ</td>
+                                    <td>
+                                        <?php echo $tong_tien_dich_vu > 0 ? number_format(($item['tong_tien_dich_vu'] / $tong_tien_dich_vu) * 100, 2) : 0; ?>%
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="4" class="text-center">Không có dữ liệu</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.8.0/chart.min.js"></script>
+<script>
+// Khởi tạo dữ liệu cho biểu đồ
+document.addEventListener("DOMContentLoaded", function() {
+    // Dữ liệu cho biểu đồ cột
+    const barChartData = {
+        labels: [
+            <?php 
+            if (!empty($bao_cao_doanh_thu)) {
+                foreach ($bao_cao_doanh_thu as $item) {
+                    if ($loai_bao_cao == 'thang') {
+                        echo "\"Tháng " . $item['thang'] . "/" . $item['nam'] . "\", ";
+                    } elseif ($loai_bao_cao == 'nam') {
+                        echo "\"Năm " . $item['nam'] . "\", ";
+                    } else {
+                        echo "\"" . date('d/m/Y', strtotime($item['thoi_gian'])) . "\", ";
+                    }
+                }
+            }
+            ?>
+        ],
+        datasets: [
+            {
+                label: "Tiền phòng",
+                backgroundColor: "rgba(0, 123, 255, 0.7)",
+                borderColor: "rgba(0, 123, 255, 1)",
+                data: [
+                    <?php 
+                    if (!empty($bao_cao_doanh_thu)) {
+                        foreach ($bao_cao_doanh_thu as $item) {
+                            echo $item['tong_tien_phong'] . ", ";
+                        }
+                    }
+                    ?>
+                ]
+            },
+            {
+                label: "Tiền dịch vụ",
+                backgroundColor: "rgba(255, 193, 7, 0.7)",
+                borderColor: "rgba(255, 193, 7, 1)",
+                data: [
+                    <?php 
+                    if (!empty($bao_cao_doanh_thu)) {
+                        foreach ($bao_cao_doanh_thu as $item) {
+                            echo $item['tong_tien_dich_vu'] . ", ";
+                        }
+                    }
+                    ?>
+                ]
+            }
+        ]
+    };
+
+    // Dữ liệu cho biểu đồ tròn
+    const pieChartData = {
+        labels: [
+            <?php 
+            if (!empty($thong_ke_theo_loai_phong)) {
+                foreach ($thong_ke_theo_loai_phong as $item) {
+                    switch ($item['loai_phong']) {
+                        case 'đơn':
+                            echo "\"Phòng đơn\", ";
+                            break;
+                        case 'đôi':
+                            echo "\"Phòng đôi\", ";
+                            break;
+                        case 'vip':
+                            echo "\"Phòng VIP\", ";
+                            break;
+                        default:
+                            echo "\"" . $item['loai_phong'] . "\", ";
+                    }
+                }
+            }
+            ?>
+        ],
+        datasets: [
+            {
+                backgroundColor: ["#007bff", "#28a745", "#dc3545", "#ffc107", "#17a2b8"],
+                data: [
+                    <?php 
+                    if (!empty($thong_ke_theo_loai_phong)) {
+                        foreach ($thong_ke_theo_loai_phong as $item) {
+                            echo $item['tong_doanh_thu'] . ", ";
+                        }
+                    }
+                    ?>
+                ]
+            }
+        ]
+    };
+
+    // Khởi tạo biểu đồ cột
+    var barChartElement = document.getElementById("myBarChart");
+    if (barChartElement) {
+        new Chart(barChartElement, {
+            type: "bar",
+            data: barChartData,
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return new Intl.NumberFormat('vi-VN').format(value) + ' đ';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + new Intl.NumberFormat('vi-VN').format(context.raw) + ' đ';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Khởi tạo biểu đồ tròn
+    var pieChartElement = document.getElementById("myPieChart");
+    if (pieChartElement) {
+        new Chart(pieChartElement, {
+            type: "pie",
+            data: pieChartData,
+            options: {
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.raw;
+                                const percentage = ((value / <?php echo $tong_doanh_thu ?: 1; ?>) * 100).toFixed(2);
+                                return context.label + ': ' + new Intl.NumberFormat('vi-VN').format(value) + ' đ (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Xử lý xuất Excel
+    document.getElementById("btn-export").addEventListener("click", function() {
+        window.location.href = "export_doanh_thu.php?ngay_bat_dau=" + document.getElementById("ngay_bat_dau").value + 
+                              "&ngay_ket_thuc=" + document.getElementById("ngay_ket_thuc").value + 
+                              "&loai_bao_cao=" + document.getElementById("loai_bao_cao").value;
+    });
+});
+</script>
+
+<?php
+// Import file footer
+require_once __DIR__ . '/../../includes/footer.php';
+?>
+
+// thanh_toan.php
+
+<?php
+ob_start();
+// Bắt đầu phiên làm việc nếu chưa bắt đầu
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Kiểm tra đăng nhập
+if (!isset($_SESSION['user_id'])) {
+    $_SESSION['message'] = "Vui lòng đăng nhập để tiếp tục";
+    $_SESSION['message_type'] = "warning";
+    header("Location: /quanlykhachsan/auth/login.php");
+    exit;
+}
+
+// Import các file cần thiết
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../includes/header.php';
+
+// Khai báo các biến
+$khach_hang_info = [];
+$phong_info = [];
+$dich_vu_info = [];
+$tien_phong = 0;
+$tien_dich_vu = 0;
+$tien_coc = 0;
+$tong_tien = 0;
+$id_dat_phong = 0;
+$id_hoa_don = 0;
+$error = '';
+$success = '';
+
+// Xử lý khi form được gửi đi
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['id_dat_phong']) && !empty($_POST['id_dat_phong'])) {
+        $id_dat_phong = $_POST['id_dat_phong'];
+        
+        // Kiểm tra xem đã có hóa đơn chưa
+        $existing_invoice = fetchSingleRow("SELECT id, trang_thai FROM hoa_don WHERE id_dat_phong = ?", [$id_dat_phong]);
+        
+        if ($existing_invoice && $existing_invoice['trang_thai'] === 'đã thanh toán') {
+            $error = "Hóa đơn này đã được thanh toán trước đó!";
+        } else {
+            try {
+                // Bắt đầu giao dịch
+                $conn = getDatabaseConnection();
+                $conn->beginTransaction();
+
+                if ($existing_invoice) {
+                    // Cập nhật hóa đơn hiện có
+                    $id_hoa_don = $existing_invoice['id'];
+                    $result = executeQuery(
+                        "UPDATE hoa_don SET trang_thai = 'đã thanh toán', ngay_thanh_toan = CURDATE() WHERE id = ?",
+                        [$id_hoa_don]
+                    );
+                } else {
+                    // Lấy thông tin đặt phòng
+                    $dat_phong = fetchSingleRow("SELECT * FROM dat_phong WHERE id = ?", [$id_dat_phong]);
+                    if (!$dat_phong) {
+                        throw new Exception("Không tìm thấy thông tin đặt phòng!");
+                    }
+
+                    // Tính tổng tiền phòng
+                    $phong = fetchSingleRow("SELECT gia_ngay FROM phong WHERE id = ?", [$dat_phong['id_phong']]);
+                    $ngay_nhan = new DateTime($dat_phong['ngay_nhan_phong']);
+                    $ngay_tra = new DateTime($dat_phong['ngay_tra_phong']);
+                    $so_ngay = $ngay_tra->diff($ngay_nhan)->days;
+                    $so_ngay = $so_ngay > 0 ? $so_ngay : 1;
+                    $tong_tien_phong = $phong['gia_ngay'] * $so_ngay;
+
+                    // Tính tổng tiền dịch vụ
+                    $dich_vu_result = executeQuery(
+                        "SELECT SUM(thanh_tien) as tong_tien_dich_vu FROM su_dung_dich_vu WHERE id_dat_phong = ?",
+                        [$id_dat_phong]
+                    );
+                    $dich_vu_row = $dich_vu_result->fetch(PDO::FETCH_ASSOC);
+                    $tong_tien_dich_vu = $dich_vu_row['tong_tien_dich_vu'] ?? 0;
+
+                    // Tính tổng cần thanh toán
+                    $tong_thanh_toan = $tong_tien_phong + $tong_tien_dich_vu - $dat_phong['tien_coc'];
+
+                    // Tạo hóa đơn mới
+                    $id_hoa_don = insertAndGetId(
+                        "INSERT INTO hoa_don (id_dat_phong, ngay_thanh_toan, tong_tien_phong, tong_tien_dich_vu, tong_thanh_toan, trang_thai) 
+                        VALUES (?, CURDATE(), ?, ?, ?, 'đã thanh toán')",
+                        [$id_dat_phong, $tong_tien_phong, $tong_tien_dich_vu, $tong_thanh_toan]
+                    );
+                }
+
+                // Cập nhật trạng thái đặt phòng thành 'đã trả phòng'
+                executeQuery(
+                    "UPDATE dat_phong SET trang_thai = 'đã trả phòng' WHERE id = ?",
+                    [$id_dat_phong]
+                );
+
+                // Cập nhật trạng thái phòng thành 'trống'
+                executeQuery(
+                    "UPDATE phong SET trang_thai = 'trống' WHERE id = (SELECT id_phong FROM dat_phong WHERE id = ?)",
+                    [$id_dat_phong]
+                );
+
+                // Hoàn tất giao dịch
+                $conn->commit();
+                $success = "Thanh toán thành công! Mã hóa đơn: " . $id_hoa_don;
+
+                // Đặt thông báo cho trang sau khi chuyển hướng
+                $_SESSION['message'] = $success;
+                $_SESSION['message_type'] = "success";
+                header("Location: /quanlykhachsan/admin/hoa_don/index.php");
+                exit;
+            } catch (Exception $e) {
+                // Nếu có lỗi, hủy bỏ giao dịch
+                $conn->rollBack();
+                $error = "Lỗi: " . $e->getMessage();
+            }
+        }
+    } else if (isset($_POST['search_id_dat_phong']) && !empty($_POST['search_id_dat_phong'])) {
+        $id_dat_phong = $_POST['search_id_dat_phong'];
+    }
+}
+
+// Nếu có ID đặt phòng (từ form tìm kiếm hoặc từ tham số URL)
+if (isset($_GET['id_dat_phong']) && !empty($_GET['id_dat_phong'])) {
+    $id_dat_phong = $_GET['id_dat_phong'];
+}
+
+// Lấy thông tin hóa đơn nếu có ID đặt phòng
+if ($id_dat_phong > 0) {
+    // Lấy thông tin đặt phòng
+    $dat_phong = fetchSingleRow(
+        "SELECT dp.*, kh.ho_ten as ten_khach_hang, p.so_phong, p.loai_phong, p.gia_ngay 
+        FROM dat_phong dp 
+        JOIN khach_hang kh ON dp.id_khach_hang = kh.id 
+        JOIN phong p ON dp.id_phong = p.id 
+        WHERE dp.id = ?",
+        [$id_dat_phong]
+    );
+
+    if ($dat_phong) {
+        $khach_hang_info = fetchSingleRow("SELECT * FROM khach_hang WHERE id = ?", [$dat_phong['id_khach_hang']]);
+        $phong_info = fetchSingleRow("SELECT * FROM phong WHERE id = ?", [$dat_phong['id_phong']]);
+        
+        // Kiểm tra hóa đơn đã tồn tại chưa
+        $existing_invoice = fetchSingleRow("SELECT * FROM hoa_don WHERE id_dat_phong = ?", [$id_dat_phong]);
+        
+        if ($existing_invoice && $existing_invoice['trang_thai'] === 'đã thanh toán') {
+            $error = "Hóa đơn này đã được thanh toán trước đó!";
+        } else {
+            // Tính số ngày ở
+            $ngay_nhan = new DateTime($dat_phong['ngay_nhan_phong']);
+            $ngay_tra = new DateTime($dat_phong['ngay_tra_phong']);
+            $so_ngay = $ngay_tra->diff($ngay_nhan)->days;
+            $so_ngay = $so_ngay > 0 ? $so_ngay : 1;
+            
+            // Tính tiền phòng
+            $tien_phong = $phong_info['gia_ngay'] * $so_ngay;
+            
+            // Lấy thông tin dịch vụ đã sử dụng
+            $dich_vu_info = fetchAllRows(
+                "SELECT sv.*, dv.ten_dich_vu, dv.gia 
+                FROM su_dung_dich_vu sv 
+                JOIN dich_vu dv ON sv.id_dich_vu = dv.id 
+                WHERE sv.id_dat_phong = ?",
+                [$id_dat_phong]
+            );
+            
+            // Tính tổng tiền dịch vụ
+            $tien_dich_vu = 0;
+            if ($dich_vu_info) {
+                foreach ($dich_vu_info as $dv) {
+                    $tien_dich_vu += $dv['thanh_tien'];
+                }
+            }
+            
+            // Lấy tiền cọc
+            $tien_coc = $dat_phong['tien_coc'];
+            
+            // Tính tổng tiền
+            $tong_tien = $tien_phong + $tien_dich_vu - $tien_coc;
+        }
+    } else {
+        $error = "Không tìm thấy thông tin đặt phòng!";
+    }
+}
+
+// Lấy danh sách đặt phòng có thể thanh toán
+$dat_phong_list = fetchAllRows(
+    "SELECT dp.id, dp.ngay_nhan_phong, dp.ngay_tra_phong, kh.ho_ten, p.so_phong, p.loai_phong 
+    FROM dat_phong dp 
+    JOIN khach_hang kh ON dp.id_khach_hang = kh.id 
+    JOIN phong p ON dp.id_phong = p.id 
+    WHERE dp.trang_thai = 'đã nhận phòng' 
+    AND NOT EXISTS (SELECT 1 FROM hoa_don hd WHERE hd.id_dat_phong = dp.id AND hd.trang_thai = 'đã thanh toán')"
+);
+?>
+
+<div class="container-fluid">
+    <h1 class="mt-4 mb-3">Thanh toán hóa đơn</h1>
+    
+    <?php if ($error): ?>
+        <div class="alert alert-danger"><?php echo $error; ?></div>
+    <?php endif; ?>
+    
+    <?php if ($success): ?>
+        <div class="alert alert-success"><?php echo $success; ?></div>
+    <?php endif; ?>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-search"></i> Tìm kiếm đặt phòng
+        </div>
+        <div class="card-body">
+            <form method="post" action="">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="search_id_dat_phong">Chọn đặt phòng:</label>
+                            <select name="search_id_dat_phong" id="search_id_dat_phong" class="form-control">
+                                <option value="">-- Chọn đặt phòng --</option>
+                                <?php if ($dat_phong_list): ?>
+                                    <?php foreach ($dat_phong_list as $dp): ?>
+                                        <option value="<?php echo $dp['id']; ?>" <?php echo ($id_dat_phong == $dp['id']) ? 'selected' : ''; ?>>
+                                            DP<?php echo $dp['id']; ?> - <?php echo $dp['ho_ten']; ?> - Phòng <?php echo $dp['so_phong']; ?> (<?php echo $dp['loai_phong']; ?>)
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn btn-primary form-control">
+                                <i class="fas fa-search"></i> Tìm kiếm
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <?php if ($id_dat_phong > 0 && $dat_phong && !$error): ?>
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-file-invoice"></i> Thông tin hóa đơn
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Thông tin khách hàng</h5>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="30%">Họ tên:</th>
+                                <td><?php echo $khach_hang_info['ho_ten']; ?></td>
+                            </tr>
+                            <tr>
+                                <th>CMND:</th>
+                                <td><?php echo $khach_hang_info['so_cmnd']; ?></td>
+                            </tr>
+                            <tr>
+                                <th>Số điện thoại:</th>
+                                <td><?php echo $khach_hang_info['so_dien_thoai']; ?></td>
+                            </tr>
+                            <tr>
+                                <th>Địa chỉ:</th>
+                                <td><?php echo $khach_hang_info['dia_chi']; ?></td>
+                            </tr>
+                        </table>
+                        </div>
+                    <div class="col-md-6">
+                        <h5>Thông tin đặt phòng</h5>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="40%">Mã đặt phòng:</th>
+                                <td>DP<?php echo $dat_phong['id']; ?></td>
+                            </tr>
+                            <tr>
+                                <th>Phòng:</th>
+                                <td><?php echo $phong_info['so_phong']; ?> (<?php echo $phong_info['loai_phong']; ?>)</td>
+                            </tr>
+                            <tr>
+                                <th>Ngày nhận phòng:</th>
+                                <td><?php echo date('d/m/Y', strtotime($dat_phong['ngay_nhan_phong'])); ?></td>
+                            </tr>
+                            <tr>
+                                <th>Ngày trả phòng:</th>
+                                <td><?php echo date('d/m/Y', strtotime($dat_phong['ngay_tra_phong'])); ?></td>
+                            </tr>
+                            <tr>
+                                <th>Số ngày ở:</th>
+                                <td><?php echo $so_ngay; ?> ngày</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <h5 class="mt-4">Chi tiết hóa đơn</h5>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr class="table-primary">
+                            <th>Nội dung</th>
+                            <th>Đơn giá</th>
+                            <th>Số lượng</th>
+                            <th>Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Tiền phòng <?php echo $phong_info['so_phong']; ?> (<?php echo $phong_info['loai_phong']; ?>)</td>
+                            <td class="text-end"><?php echo number_format($phong_info['gia_ngay'], 0, ',', '.'); ?> VNĐ</td>
+                            <td class="text-center"><?php echo $so_ngay; ?> ngày</td>
+                            <td class="text-end"><?php echo number_format($tien_phong, 0, ',', '.'); ?> VNĐ</td>
+                        </tr>
+                        
+                        <?php if ($dich_vu_info): ?>
+                            <?php foreach ($dich_vu_info as $dv): ?>
+                                <tr>
+                                    <td><?php echo $dv['ten_dich_vu']; ?></td>
+                                    <td class="text-end"><?php echo number_format($dv['gia'], 0, ',', '.'); ?> VNĐ</td>
+                                    <td class="text-center"><?php echo $dv['so_luong']; ?></td>
+                                    <td class="text-end"><?php echo number_format($dv['thanh_tien'], 0, ',', '.'); ?> VNĐ</td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="4" class="text-center">Không có dịch vụ nào được sử dụng</td>
+                            </tr>
+                        <?php endif; ?>
+                        
+                        <tr class="table-light">
+                            <td colspan="3" class="text-end fw-bold">Tổng tiền phòng:</td>
+                            <td class="text-end fw-bold"><?php echo number_format($tien_phong, 0, ',', '.'); ?> VNĐ</td>
+                        </tr>
+                        <tr class="table-light">
+                            <td colspan="3" class="text-end fw-bold">Tổng tiền dịch vụ:</td>
+                            <td class="text-end fw-bold"><?php echo number_format($tien_dich_vu, 0, ',', '.'); ?> VNĐ</td>
+                        </tr>
+                        <tr class="table-light">
+                            <td colspan="3" class="text-end fw-bold">Tiền đặt cọc:</td>
+                            <td class="text-end fw-bold">-<?php echo number_format($tien_coc, 0, ',', '.'); ?> VNĐ</td>
+                        </tr>
+                        <tr class="table-success">
+                            <td colspan="3" class="text-end fw-bold fs-5">Tổng cộng cần thanh toán:</td>
+                            <td class="text-end fw-bold fs-5"><?php echo number_format($tong_tien, 0, ',', '.'); ?> VNĐ</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <form method="post" action="" class="mt-4">
+                    <input type="hidden" name="id_dat_phong" value="<?php echo $id_dat_phong; ?>">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <a href="/quanlykhachsan/admin/hoa_don/index.php" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Quay lại
+                            </a>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button type="submit" class="btn btn-success" onclick="return confirm('Bạn có chắc chắn muốn thanh toán hóa đơn này?');">
+                                <i class="fas fa-money-bill-wave"></i> Xác nhận thanh toán
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    <?php endif; ?>
+</div>
+
+<?php
+// Import footer
+require_once __DIR__ . '/../../includes/footer.php';
+ob_end_flush(); // Xóa bộ nhớ đệm
+?>
